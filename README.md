@@ -168,4 +168,7 @@ Our SOTA pre-trained models can be found in the [models](models) directory. It c
 Vocabulary files used in the utterances encoder are stored in the `vocabulary` directory. It contains two vocabs: `glove.42B.300d-lower-1r-speaker-builder_actions-oov_as_unk-all_splits/vocab.pkl` and `glove.42B.300d-lower-1r-speaker-oov_as_unk-all_splits/vocab.pkl`. The former is the one to be used when using builder action tokens and the latter when not. Our code handles switching between these two vocabs seamlessly -- so you will not need to.
 
 To learn more on how to generate vocab files, see [this](docs/vocab.md).
+<<<<<<< HEAD
+=======
 >>>>>>> 8903ac1ce71b39331a8b8bba6fe832c88292acec
+>>>>>>> 357d613235ac69be8aa57c44e1bfa5cff7f5f2d9
