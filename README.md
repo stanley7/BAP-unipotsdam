@@ -3,24 +3,6 @@ This repository contains code for the ACL 2020 paper [Learning to execute instru
 
 More details on this work can be found at [this landing page](http://juliahmr.cs.illinois.edu/Minecraft/).
 
-If you use this work, please cite:
-```
-@inproceedings{jayannavar-etal-2020-learning,
-    title = "Learning to execute instructions in a {M}inecraft dialogue",
-    author = "Jayannavar, Prashant  and
-      Narayan-Chen, Anjali  and
-      Hockenmaier, Julia",
-    booktitle = "Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics",
-    month = jul,
-    year = "2020",
-    address = "Online",
-    publisher = "Association for Computational Linguistics",
-    url = "https://www.aclweb.org/anthology/2020.acl-main.232",
-    pages = "2589--2602",
-    abstract = "The Minecraft Collaborative Building Task is a two-player game in which an Architect (A) instructs a Builder (B) to construct a target structure in a simulated Blocks World Environment. We define the subtask of predicting correct action sequences (block placements and removals) in a given game context, and show that capturing B{'}s past actions as well as B{'}s perspective leads to a significant improvement in performance on this challenging language understanding problem.",
-}
-```
-
 # Setup
 ## Dependencies
 Install requirements into a virtual environment using Anaconda and the [environment.yaml](environment.yaml) file we provide:
@@ -52,7 +34,10 @@ Refer [PyTorch](https://pytorch.org/get-started/previous-versions/#conda) for al
 >>> nltk.download('punkt')
 ```
 This will create a directory named `nltk_data` within your home directory containing a bunch of tokenizers.
-- Download GloVe embeddings from https://nlp.stanford.edu/projects/glove/. Specifically, you will need to download the glove.42B.300d.txt file. Store it in `data/embeddings`.
+- We generated the vocabulary file using the 'GoogleNews-vectors-negative300.bin.gz' dataset and stored it in vocabulary/glove.42B.300d-lower-1r-speaker-oov_as_unk-all_splits. If you prefer to create a custom vocabulary file, you can obtain the embedding files from https://code.google.com/archive/p/word2vec/ and generate your vocabulary file using the following command:
+```
+!python3 /content/BAP-unipotsdam_lmgs/python/vocab.py --embeddings_file /content/minecraft-bap-models/vocabulary/glove.42B.300d-lower-1r-speaker-oov_as_unk-all_splits/glove.6B.50d.txt --embed_size 300 --oov_as_unk --lower --use_speaker_tokens --use_builder_action_tokens --threshold 0 --verbose
+```
 
 # Raw data
 In `data`, the [Minecraft Dialogue Corpus](https://drive.google.com/drive/folders/16lDzswcQh8DR2jkQJdoVTK-RyVDFPHKa?usp=sharing) (without screenshots) is in `logs`. The target structures are in `gold-configurations`. `logs/splits.json` defines the train-test-val split by defining subsets of target structures. `lexicons` contains `synonym_substitutions.json`, a file containing word synonyms we use for data augmentation.
