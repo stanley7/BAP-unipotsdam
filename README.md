@@ -1,5 +1,5 @@
 # Introduction
-This repository contains code for the ACL 2020 paper [Learning to execute instructions in a Minecraft dialogue](https://www.aclweb.org/anthology/2020.acl-main.232/).
+Our project is based on the original paper that we not only replicated but also expanded upon. [Learning to execute instructions in a Minecraft dialogue](https://www.aclweb.org/anthology/2020.acl-main.232/).
 
 More details on this work can be found at [this landing page](http://juliahmr.cs.illinois.edu/Minecraft/).
 
