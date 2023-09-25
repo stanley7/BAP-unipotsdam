@@ -12,7 +12,7 @@ class EncoderRNN(nn.Module):
 	"""
 	# TODO: set up for attention, multiple layers
 	# FIXME: use embed_dropout!!
-	def __init__(self, vocabulary, hidden_size, num_hidden_layers, dropout=0, linear_size=None, nonlinearity=None, rnn="gru", bidirectional=True, train_embeddings=False):
+	def __init__(self, vocabulary, hidden_size, num_hidden_layers, dropout=0, linear_size=None, nonlinearity='leakyrelu', rnn="gru", bidirectional=True, train_embeddings=False):
 		super(EncoderRNN, self).__init__()
 		# Keep for reference
 		self.rnn_hidden_size = hidden_size
@@ -30,9 +30,9 @@ class EncoderRNN(nn.Module):
 		if linear_size:
 			self.linear = nn.Linear(vocabulary.embed_size, self.linear_size)
 
-		self.nonlinearity = None
-		if nonlinearity == 'relu':
-			self.nonlinearity = nn.ReLU()
+		self.nonlinearity = 'leakyrelu'
+		if nonlinearity == 'leakyrelu':
+			self.nonlinearity = nn.LeakyReLU()
 		elif nonlinearity == 'tanh':
 			self.nonlinearity = nn.Tanh()
 

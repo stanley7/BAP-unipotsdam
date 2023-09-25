@@ -93,7 +93,7 @@ class WorldStateEncoderCNN(nn.Module):
 
         self.conv_layers = nn.ModuleList(self.conv_layers)
 
-        self.nonlinearity = nn.ReLU()
+        self.nonlinearity = nn.LeakyReLU()
 
         self.dropout = nn.Dropout3d(p=dropout)
 

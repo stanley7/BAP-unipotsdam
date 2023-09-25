@@ -5,6 +5,24 @@ import torch, sys
 from encoder_world_state.model import WorldStateEncoderCNN
 from utils import *
 
+class Attention(nn.Module):
+    def __init__(self, hidden_dim):
+        super(Attention, self).__init__()
+        self.attention = nn.Linear(hidden_dim * 3, 1)
+
+    def forward(self, hidden, encoder_outputs):
+        batch_size = encoder_outputs.shape[1]
+        src_len = encoder_outputs.shape[0]
+
+        hidden = hidden.unsqueeze(1).repeat(1, src_len, 1)
+        encoder_outputs = encoder_outputs.permute(1, 0, 2)
+        
+        energy = torch.tanh(torch.cat((hidden, encoder_outputs), dim=2))
+        energy = self.attention(energy).squeeze(2)
+        
+        return F.softmax(energy, dim=1)
+
+
 class ActionsDecoder(nn.Module):
     def __init__(
         self, rnn, rnn_hidden_size, num_hidden_layers,
@@ -15,6 +33,7 @@ class ActionsDecoder(nn.Module):
         add_hidden_for_stop_action_pred, add_perspective_coords
     ):
         super(ActionsDecoder, self).__init__()
+        self.attention = Attention(rnn_hidden_size)
 
         self.add_hidden_for_stop_action_pred = add_hidden_for_stop_action_pred
         self.num_hidden_layers = num_hidden_layers
@@ -80,7 +99,7 @@ class ActionsDecoder(nn.Module):
 
         self.dropout = nn.Dropout(p=dropout)
 
-        self.nonlinearity = nn.ReLU()
+        self.nonlinearity = nn.LeakyReLU()
 
         self.init_weights()
 
