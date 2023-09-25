@@ -1,5 +1,10 @@
 import sys, os, nltk, pickle, argparse, gzip, csv, json, torch, numpy as np, torch.nn as nn
 from collections import defaultdict
+import gensim
+
+import nltk
+nltk.download('punkt')
+
 
 sys.path.append('..')
 from utils import Logger, get_logfiles, tokenize, architect_prefix, builder_prefix, type2id, initialize_rngs, write_commit_hashes
@@ -154,52 +159,92 @@ class Vocabulary(object):
 
 		self.word_vectors = vector_arr
 
+	
 	def load_vectors(self):
 		vector_filename = self.vector_filename
 		print("\nLoading word embedding vectors from", vector_filename, "...")
 
+		model = gensim.models.KeyedVectors.load_word2vec_format(vector_filename, binary=True)
+
 		embed_size = self.embed_size
 		threshold = self.threshold
 
-		f = None
-		if vector_filename.endswith('.gz'): # TODO: this doesn't work. fix loading of word2vec pretrained model
-			f = gzip.open(vector_filename, 'rt')
-		else:
-			f = open(vector_filename, 'r')
-
-		# load word embeddings from file
 		data = []
 		data_rare = []
-		for line in f:
-			tokens = line.split()
 
-			if len(tokens) != embed_size+1:
-				print("Warning: expected line length:", str(embed_size+1)+", got:", str(len(tokens))+"; Line:", " ".join(line.split()[:3]), "...", " ".join(line.split()[-3:]))
+		for word in self.word_counts:
+			if word not in model:
 				continue
 
-			word = tokens[0]
-
-			# discard out-of-domain embeddings, if desired
-			if word not in self.word_counts or self.word_counts[word] < threshold: # if not in data or if rare
-				if word in self.word_counts: # rare words in data but have embeddings
-					for t in tokens[1:]:
-						data_rare.append(float(t))
+			if self.word_counts[word] < threshold:  # if not in data or if rare
+				for _ in range(embed_size):
+					data_rare.append(0.0)
 				continue
 
-			for t in tokens[1:]:
-				data.append(float(t))
+			embedding = model[word]
+			data.extend(embedding)
 
 			self.add_word(word)
 
-		data_arr = np.reshape(data, newshape=(int(len(data)/embed_size), embed_size)) # real frequent words x embedding size
+		data_arr = np.reshape(data, newshape=(int(len(data) / embed_size), embed_size))  # real frequent words x embedding size
 		self.word_vectors = np.concatenate((self.word_vectors, data_arr), 0)
+		
 		if data_rare:
-			data_rare_arr = np.reshape(data_rare, newshape=(int(len(data_rare)/embed_size), embed_size)) # real rare words x embedding size
+			data_rare_arr = np.reshape(data_rare, newshape=(int(len(data_rare) / embed_size), embed_size))  # real rare words x embedding size
 			avg_vector = np.expand_dims(np.mean(data_rare_arr, axis=0), axis=0)
-			self.add_unk(avg_vector) # set unk's embedding to the average embedding of the rare words
+			self.add_unk(avg_vector)  # set unk's embedding to the average embedding of the rare words
 		else:
-			print("Adding random vector for rare bucket as there are no rare words...")
+			print("Adding a random vector for the rare bucket as there are no rare words...")
 			self.add_unk(np.random.rand(1, embed_size))
+
+
+
+		# def load_vectors(self):
+		# 	vector_filename = self.vector_filename
+		# 	print("\nLoading word embedding vectors from", vector_filename, "...")
+
+		# 	embed_size = self.embed_size
+		# 	threshold = self.threshold
+
+		# 	f = None
+		# 	if vector_filename.endswith('.gz'): # TODO: this doesn't work. fix loading of word2vec pretrained model
+		# 		f = gzip.open(vector_filename, 'rb')
+		# 	else:
+		# 		f = open(vector_filename, 'rb')
+
+		# 	# load word embeddings from file
+		# 	data = []
+		# 	data_rare = []
+		# 	for line in f:
+		# 		tokens = line.split()
+
+		# 		if len(tokens) != embed_size+1:
+		# 			print("Warning: expected line length:", str(embed_size+1)+", got:", str(len(tokens))+"; Line:", " ".join(line.split()[:3]), "...", " ".join(line.split()[-3:]))
+		# 			continue
+
+		# 		word = tokens[0]
+
+		# 		# discard out-of-domain embeddings, if desired
+		# 		if word not in self.word_counts or self.word_counts[word] < threshold: # if not in data or if rare
+		# 			if word in self.word_counts: # rare words in data but have embeddings
+		# 				for t in tokens[1:]:
+		# 					data_rare.append(float(t))
+		# 			continue
+
+		# 		for t in tokens[1:]:
+		# 			data.append(float(t))
+
+		# 		self.add_word(word)
+
+		# 	data_arr = np.reshape(data, newshape=(int(len(data)/embed_size), embed_size)) # real frequent words x embedding size
+		# 	self.word_vectors = np.concatenate((self.word_vectors, data_arr), 0)
+		# 	if data_rare:
+		# 		data_rare_arr = np.reshape(data_rare, newshape=(int(len(data_rare)/embed_size), embed_size)) # real rare words x embedding size
+		# 		avg_vector = np.expand_dims(np.mean(data_rare_arr, axis=0), axis=0)
+		# 		self.add_unk(avg_vector) # set unk's embedding to the average embedding of the rare words
+		# 	else:
+		# 		print("Adding random vector for rare bucket as there are no rare words...")
+		# 		self.add_unk(np.random.rand(1, embed_size))
 
 	def add_unk(self, avg_vector):
 		self.word_vectors = np.concatenate((self.word_vectors, avg_vector), 0)
@@ -281,84 +326,98 @@ def write_train_word_counts(vocab_path, word_counts, oov_words, threshold):
 			f.write(key.ljust(30)+str(value).ljust(10)+suffix+'\n')
 	print("Wrote word counts to", os.path.join('../vocabulary', vocab_path, 'word_counts.txt'), '\n')
 
+# ...
+
 def main(args):
-	""" Creates a vocabulary according to specified arguments and saves it to disk. """
-	if not os.path.isdir('../vocabulary'):
-		os.makedirs('../vocabulary')
+    """ Creates a vocabulary according to specified arguments and saves it to disk. """
+    if not os.path.isdir('/content/minecraft-bap-models/vocabulary'):
+        os.makedirs('../vocabulary')
 
-	# create vocabulary filename based on parameter settings
-	if args.vocab_name is None:
-		lower = "-lower" if args.lower else ""
-		threshold = "-"+str(args.threshold)+"r" if args.threshold > 0 else ""
-		speaker_tokens = "-speaker" if args.use_speaker_tokens else ""
-		action_tokens = "-builder_actions" if args.use_builder_action_tokens else ""
-		oov_as_unk = "-oov_as_unk" if args.oov_as_unk else ""
-		all_splits = "-all_splits" if args.all_splits else "-train_split"
-		architect_only = "-architect_only" if not args.add_builder_utterances and not args.builder_utterances_only else ""
-		builder_utterances_only = "-builder_only" if args.builder_utterances_only else ""
+    # create vocabulary filename based on parameter settings
+    if args.vocab_name is None:
+        lower = "-lower" if args.lower else ""
+        threshold = "-"+str(args.threshold)+"r" if args.threshold > 0 else ""
+        speaker_tokens = "-speaker" if args.use_speaker_tokens else ""
+        action_tokens = "-builder_actions" if args.use_builder_action_tokens else ""
+        oov_as_unk = "-oov_as_unk" if args.oov_as_unk else ""
+        all_splits = "-all_splits" if args.all_splits else "-train_split"
+        architect_only = "-architect_only" if not args.add_builder_utterances and not args.builder_utterances_only else ""
+        builder_utterances_only = "-builder_only" if args.builder_utterances_only else ""
 
-		if args.vector_filename is None:
-			args.vocab_name = "no-embeddings-"+str(args.embed_size)+"d"
-		else:
-			args.vocab_name = args.vector_filename.split("/")[-1].replace('.txt','').replace('.bin.gz','')
+        if args.embeddings_file is None:
+            args.vocab_name = "no-embeddings-"+str(args.embed_size)+"d"
+        else:
+            args.vocab_name = args.embeddings_file.split("/")[-1].replace('.txt','').replace('.bin.gz','')
 
-		args.vocab_name += lower+threshold+speaker_tokens+action_tokens+oov_as_unk+all_splits+architect_only+builder_utterances_only+"/"
+        args.vocab_name += lower+threshold+speaker_tokens+action_tokens+oov_as_unk+all_splits+architect_only+builder_utterances_only+"/"
 
-	args.vocab_name = os.path.join(args.base_vocab_dir, args.vocab_name)
+    args.vocab_name = os.path.join(args.base_vocab_dir, args.vocab_name)
 
-	if not os.path.exists(args.vocab_name):
-		os.makedirs(args.vocab_name)
+    if not os.path.exists(args.vocab_name):
+        os.makedirs(args.vocab_name)
 
-	# logger
-	sys.stdout = Logger(os.path.join(args.vocab_name, 'vocab.log'))
-	print(args)
+    # logger
+    sys.stdout = Logger(os.path.join(args.vocab_name, 'vocab.log'))
+    print(args)
 
-	# create the vocabulary
-	vocabulary = Vocabulary(data_path=args.data_path, vector_filename=args.vector_filename,
-		embed_size=args.embed_size, use_speaker_tokens=args.use_speaker_tokens, use_builder_action_tokens=args.use_builder_action_tokens,
-		add_words=not args.oov_as_unk, lower=args.lower, threshold=args.threshold, all_splits=args.all_splits, add_builder_utterances=args.add_builder_utterances,
-		builder_utterances_only=args.builder_utterances_only)
+    # create the vocabulary
+    vocabulary = Vocabulary(data_path=args.data_path, vector_filename=args.embeddings_file,
+        embed_size=args.embed_size, use_speaker_tokens=args.use_speaker_tokens, use_builder_action_tokens=args.use_builder_action_tokens,
+        add_words=not args.oov_as_unk, lower=args.lower, threshold=args.threshold, all_splits=args.all_splits, add_builder_utterances=args.add_builder_utterances,
+        builder_utterances_only=args.builder_utterances_only)
 
-	if args.verbose:
-		print(vocabulary)
+    if args.verbose:
+        print(vocabulary)
 
-	write_train_word_counts(args.vocab_name, vocabulary.word_counts, vocabulary.oov_words, vocabulary.threshold)
+    write_train_word_counts(args.vocab_name, vocabulary.word_counts, vocabulary.oov_words, vocabulary.threshold)
 
-	# save the vocabulary to disk
-	print("Saving the vocabulary ...")
-	with open(os.path.join(args.vocab_name, 'vocab.pkl'), 'wb') as f:
-		pickle.dump(vocabulary, f)
-		print("Saved the vocabulary to '%s'" %os.path.realpath(f.name))
+    # save the vocabulary to disk
+    print("Saving the vocabulary ...")
+    with open(os.path.join(args.vocab_name, 'vocab.pkl'), 'wb') as f:
+        pickle.dump(vocabulary, f)
+        print("Saved the vocabulary to '%s'" %os.path.realpath(f.name))
 
-	print("Total vocabulary size: %d" %len(vocabulary))
+    print("Total vocabulary size: %d" %len(vocabulary))
 
-	print("\nSaving git commit hashes ...\n")
-	write_commit_hashes("..", args.vocab_name)
+    print("\nSaving git commit hashes ...\n")
+    write_commit_hashes("..", args.vocab_name)
 
-	sys.stdout = sys.__stdout__
+    sys.stdout = sys.__stdout__
+
+# ...
 
 if __name__ == '__main__':
-	parser = argparse.ArgumentParser()
-	parser.add_argument('--vocab_name', type=str, nargs='?', default=None,
-		help='directory for saved vocabulary wrapper -- auto-generated from embeddings file name if not provided')
-	parser.add_argument('--base_vocab_dir', type=str, default='../vocabulary/', help='location for all saved vocabulary files')
-	parser.add_argument('--vector_filename', type=str, default=None,
-		help='path for word embeddings file')
-	parser.add_argument('--embed_size', type=int, default=300,
-		help='size of word embeddings')
-	parser.add_argument('--data_path', type=str, default='../data/logs/',
-		help='path for training data files')
-	parser.add_argument('--oov_as_unk', default=False, action='store_true', help='do not add oov words to the vocabulary (instead, treat them as unk tokens)')
-	parser.add_argument('--lower', default=False, action='store_true',  help='lowercase tokens in the dataset')
-	parser.add_argument('--use_speaker_tokens', default=False, action='store_true', help='use speaker tokens <Architect> </Architect> and <Builder> </Builder> instead of sentence tokens <s> and </s>')
-	parser.add_argument('--use_builder_action_tokens', default=False, action='store_true', help='use builder action tokens for pickup/putdown actions, e.g. <builder_pickup_red> and <builder_putdown_red>')
-	parser.add_argument('--threshold', type=int, default=0, help='rare word threshold for oov words in the train set')
-	parser.add_argument('--all_splits', default=False, action='store_true',  help='whether or not to use val and test data as well')
-	parser.add_argument('--add_builder_utterances', default=False, action='store_true',  help='whether or not to include builder utterances')
-	parser.add_argument('--builder_utterances_only', default=False, action='store_true',  help='whether or not to store only builder utterances')
-	parser.add_argument('--verbose', action='store_true', help='print vocabulary in plaintext to console')
-	parser.add_argument('--seed', type=int, default=1234, help='random seed')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--vocab_name', type=str, nargs='?', default=None,
+        help='directory for saved vocabulary wrapper -- auto-generated from embeddings file name if not provided')
+    parser.add_argument('--base_vocab_dir', type=str, default='../vocabulary/', help='location for all saved vocabulary files')
+    parser.add_argument('--embeddings_file', type=str, default=None,
+        help='path for word embeddings file')  # Renamed from --vector_filename
+    parser.add_argument('--embed_size', type=int, default=300,
+        help='size of word embeddings')
+    parser.add_argument('--data_path', type=str, default='/content/minecraft-bap-models/data/logs',
+        help='path for training data files')
+    parser.add_argument('--oov_as_unk', default=False, action='store_true',
+        help='do not add oov words to the vocabulary (instead, treat them as unk tokens)')
+    parser.add_argument('--lower', default=False, action='store_true',
+        help='lowercase tokens in the dataset')
+    parser.add_argument('--use_speaker_tokens', default=False, action='store_true',
+        help='use speaker tokens <Architect> </Architect> and <Builder> </Builder> instead of sentence tokens <s> and </s>')
+    parser.add_argument('--use_builder_action_tokens', default=False, action='store_true',
+        help='use builder action tokens for pickup/putdown actions, e.g. <builder_pickup_red> and <builder_putdown_red>')
+    parser.add_argument('--threshold', type=int, default=0,
+        help='rare word threshold for oov words in the train set')
+    parser.add_argument('--all_splits', default=False, action='store_true',
+        help='whether or not to use val and test data as well')
+    parser.add_argument('--add_builder_utterances', default=False, action='store_true',
+        help='whether or not to include builder utterances')
+    parser.add_argument('--builder_utterances_only', default=False, action='store_true',
+        help='whether or not to store only builder utterances')
+    parser.add_argument('--verbose', action='store_true',
+        help='print vocabulary in plaintext to console')
+    parser.add_argument('--seed', type=int, default=1234, help='random seed')
 
-	args = parser.parse_args()
-	initialize_rngs(args.seed, torch.cuda.is_available())
-	main(args)
+    args = parser.parse_args()
+    initialize_rngs(args.seed, torch.cuda.is_available())
+    main(args)
+

@@ -303,14 +303,16 @@ def main(args, test_item_batches=None, testdataset=None, encoder_vocab=None):
             action_precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
             action_recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
             action_f1 = ((2 * action_precision * action_recall) / (action_precision + action_recall)) if (action_precision + action_recall) > 0 else 0.0
+            action_jaccard_similarity = tp / (tp + fp + fn) if (tp + fp + fn) > 0 else 0.0
 
-            return action_precision, action_recall, action_f1
+            return action_precision, action_recall, action_f1, action_jaccard_similarity
 
-        action_precision, action_recall, action_f1 = compute_action_prf(fn, fp, tp)
+        action_precision, action_recall, action_f1, action_jaccard_similarity = compute_action_prf(fn, fp, tp)
 
         print('Action precision of the network on the test set:', action_precision)
         print('Action recall of the network on the test set:', action_recall)
         print('Action F1 of the network on the test set:', action_f1)
+        print('Action Jaccard Similarity of the network on the test set:', action_jaccard_similarity)
 
         total = 0
         if args.compute_extra_stats:
@@ -415,6 +417,7 @@ def main(args, test_item_batches=None, testdataset=None, encoder_vocab=None):
             f.write('action_precision ' + str(action_precision) + "\n")
             f.write('action_recall ' + str(action_recall) + "\n")
             f.write('action_f1 ' + str(action_f1) + "\n")
+            f.write('action_jaccard_similarity ' + str(action_jaccard_similarity) + "\n")
             if args.compute_extra_stats:
                 f.write('mean_edit_distance ' + str(mean_edit_distance) + "\n")
                 f.write('std_edit_distance ' + str(std_edit_distance) + "\n")

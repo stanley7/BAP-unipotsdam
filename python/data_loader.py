@@ -402,8 +402,8 @@ class CwCDataset(Dataset):
 		""" Returns length of dataset. """
 		return len(self.samples)
 
-	def get_data_loader(self, batch_size=1, shuffle=True, num_workers=1):
-		return DataLoader(dataset=self, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, collate_fn=self.collate_fn)
+	def get_data_loader(self, batch_size=1, shuffle=True, num_workers=4):
+		return DataLoader(dataset=self, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, collate_fn=self.collate_fn, pin_memory=True)
 
 # UTILS
 

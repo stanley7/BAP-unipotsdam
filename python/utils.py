@@ -243,7 +243,7 @@ def get_logfiles_with_gold_config(data_path, gold_configs_dir, split=None, with_
 	"""
 
 	# get required configs
-	with open(data_path + "/splits.json") as json_data:
+	with open('/content/BAP-unipotsdam_lmgs/data/logs' + "/splits.json") as json_data:
 			data_splits = json.load(json_data)
 
 	configs_for_split = data_splits[split]
@@ -622,7 +622,7 @@ if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser()
 
-	parser.add_argument('--data_path', type=str, default='../data/logs/', help='path for data jsons')
+	parser.add_argument('--data_path', type=str, default='/content/minecraft-bap-models/data/logs', help='path for data jsons')
 	parser.add_argument('--gold_configs_dir', type=str, default='../data/gold-configurations/', help='path for gold config xmls')
 
 	parser.add_argument('--aug_data_dir', type=str, default='../data/augmented/', help='path for aug data')
