@@ -34,7 +34,9 @@ Refer [PyTorch](https://pytorch.org/get-started/previous-versions/#conda) for al
 >>> nltk.download('punkt')
 ```
 This will create a directory named `nltk_data` within your home directory containing a bunch of tokenizers.
-- We generated the vocabulary file using the 'GoogleNews-vectors-negative300.bin.gz' dataset and stored it in vocabulary/glove.42B.300d-lower-1r-speaker-oov_as_unk-all_splits. If you prefer to create a custom vocabulary file, you can obtain the embedding files from https://code.google.com/archive/p/word2vec/ and generate your vocabulary file using the following command:
+
+
+We generated the vocabulary file using the 'GoogleNews-vectors-negative300.bin.gz' dataset and stored it in vocabulary/glove.42B.300d-lower-1r-speaker-oov_as_unk-all_splits. If you prefer to create a custom vocabulary file, you can obtain the embedding files from https://code.google.com/archive/p/word2vec/ and generate your vocabulary file using the following command:
 ```
 !python3 /content/BAP-unipotsdam_lmgs/python/vocab.py --embeddings_file /content/minecraft-bap-models/vocabulary/glove.42B.300d-lower-1r-speaker-oov_as_unk-all_splits/glove.6B.50d.txt --embed_size 300 --oov_as_unk --lower --use_speaker_tokens --use_builder_action_tokens --threshold 0 --verbose
 ```
