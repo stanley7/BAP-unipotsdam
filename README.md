@@ -90,6 +90,12 @@ To run the trainer, call it as follows:
 ```
 python trainer.py <path to hyperparameter config file> <other non hyperparameter args ...>
 ```
+We personally attempted to execute the code using the following commands, along with making some adjustments to the trainer file itself:
+```
+!python3 trainer.py /content/BAP-unipotsdam_lmgs/config/hyperparameters-3.config --num_epochs=40 --rnn="gru" --saved_dataset_dir=/content/BAP-unipotsdam_lmgs/data/lower
+```
+
+Note that this command is compatible with Google collab paths and must be changed accordingly when running in the local system
 
 Other non hyperparameter args that can be specified on the command line include args for specifying where the preprocessed data  samples reside, etc. (However, if you choose, you can also specify those in the config file as well.) For a complete list of allowed hyperparameters and other non hyperparameter args, run `python trainer_action_pred_seq.py -h`.
 
