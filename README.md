@@ -138,32 +138,6 @@ Run `python compile_results.py -h` for more information on the CLAs. Use `<args 
 
 It produces as output `cumulative_evals*.csv`, a CSV file containing one row per model. Columns include hyperparameter values, metrics, etc.
 
-# Data augmentation
-## Raw synthetic data
-The raw synthetic data (game logs and gold configurations) resides at `data/augmented`. The directory structure is similar to the original data at `data/logs` and `data/gold-configurations`.
-
-## Preprocessed augmented training data
-To use the preprocessed training samples for the augmented dataset, refer [this](#preprocessed-data).
-
-## Running data augmentation
-There are two steps:
-- Run `python/data_augmentor.py` as follows:
-```
-python data_augmentor.py 20 --lower --out_data_path=<path to write to>
-```
-This will reproduce the raw synthetic data we used in our paper. To see the full list of CLAs as well as more information on the above ones, run `python data_augmentor.py -h`. You can use them to selectively pick augmentation techniques, etc.
-
-- Following that, generate the train/test/val splits using `python/utils.py` as follows:
-```
-python utils.py --aug_data_dir=<path to raw synthetic data from previous step>
-```
-This will create the aforementioned `splits.json` file but for the synthetic data. We only ever use the train split though.
-
-# Pre-trained models
-Our SOTA pre-trained models can be found in the [models](models) directory. It contains two subdirectories:
-- [sota_on_original_data](models/sota_on_original_data): Contains our best performing model trained on the original dataset with a net action F1 of 19.7%
-- [sota_on_augmented_data](models/sota_on_augmented_data): Contains our best performing model trained on the augmented dataset with a net action F1 of 21.2% (this is also the best overall)
-
 # Vocabularies
 Vocabulary files used in the utterances encoder are stored in the `vocabulary` directory. It contains two vocabs: `glove.42B.300d-lower-1r-speaker-builder_actions-oov_as_unk-all_splits/vocab.pkl` and `glove.42B.300d-lower-1r-speaker-oov_as_unk-all_splits/vocab.pkl`. The former is the one to be used when using builder action tokens and the latter when not. Our code handles switching between these two vocabs seamlessly -- so you will not need to.
 
