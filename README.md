@@ -60,13 +60,11 @@ In `data`, the [Minecraft Dialogue Corpus](https://drive.google.com/drive/folder
 All of this raw data is sourced from our previous work [Collaborative Dialogue in Minecraft](https://www.aclweb.org/anthology/P19-1537/).
 
 # Preprocessed data
-We preprocess the raw data to obtain train/val/test samples for the Builder Action Prediction (BAP) task. These may be downloaded from https://uofi.box.com/s/pwm7gr71hncqbtyscy9quyd446j19ydx.
+The original authors preprocess the raw data to obtain train/val/test samples for the Builder Action Prediction (BAP) task. These may be downloaded from https://uofi.box.com/s/pwm7gr71hncqbtyscy9quyd446j19ydx.
 
 There are two files per data split:
 - `<split name>-samples.pkl`: A list of samples. The data format for a sample can be found [here](docs/data_format.md).
 - `<split name>-jsons.pkl`: A list of game logs. A game log is a json/dict corresponding to a dialog. These are from the original Minecraft Dialogue Corpus. Samples are extracted from every such log.
-
-Similarly the `Augmented data` subdirectory contains samples and jsons for the augmented training data (original + synthetic). We only augment training data.
 
 ## Data preprocessing
 All of our code resides in [python](python). If you want to re-generate the samples yourself, run data_loader.py as follows:
@@ -77,6 +75,11 @@ python data_loader.py --lower --dump_dataset --save_dest_dir=<destination direct
 Run `python data_loader.py -h` for more information on the above CLAs amongst others. This reads in the Minecraft Dialogue Corpus and writes samples to `<destination directory>`.
 
 To generate a smaller dataset (possibly for development purposes), simply interrupt the script while running with a `KeyboardInterrupt` (`Ctrl + c`).
+
+# Path Customization
+We executed the code in Google Colab by first cloning the GitHub repository using the `git clone` command from this directory: https://github.com/GrimGamer1999/BAP-unipotsdam_lmgs. During execution, we used absolute paths that corresponded to the Colab directory structure.
+
+Before running the code, please customize the paths in the code files to suit your preferences, as this step is essential to prevent potential errors. It's worth noting that if you choose to run the code in Google Colab following the mentioned `git clone` process, it should run without issues.
 
 # Training
 Code to train, generate from and evaluate models resides in [python/training_infra](python/training_infra). `trainer.py` is a helper script that can initialize and train a model with different combinations of hyperparameters in succession. It is intended to be used to train multiple models in sequence on a single GPU without need for intervention. It first reads in a specified configuration file that defines the different hyperparameter options to be used, then trains a model for each combination of those hyperparameters. Post training a model, it also runs the model on the val set to produce generated output. Following that, evaluation is also performed to compute the net action F1 metric amongst other stats.
