@@ -1,5 +1,6 @@
 # Introduction
 Our project is based on the original paper that we not only replicated but also expanded upon. [Learning to execute instructions in a Minecraft dialogue](https://www.aclweb.org/anthology/2020.acl-main.232/).
+This project was developed as an extension of the original ACL 2020 paper, and includes additional work and improvements. It was collaboratively developed by Stanley Joel Gona (gona@uni-potsdam.de) and Mackwyn Quadras (quadras@uni-potsdam.de).
 
 More details on this work can be found at [this landing page](http://juliahmr.cs.illinois.edu/Minecraft/).
 
